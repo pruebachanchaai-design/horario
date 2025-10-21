@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario del Día</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .day-info {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        td:first-child {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Horario del Día</h1>
+            <div class="day-info" id="dayInfo"></div>
+        </div>
+        
+        <div class="content">
+            <div id="tableContainer">
+                <!-- El horario se cargará automáticamente aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos del horario extraídos del Excel
+        const horarioData = [
+            ["Hora", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
+            ["", ".NET (C#)", "SQL", "Linux", ".NET + SQL", ".NET + Linux"],
+            ["5:00 AM", "Levantarse + higiene", "Levantarse + higiene", "Levantarse + higiene", "Levantarse + higiene", "Levantarse + higiene"],
+            ["5:15 AM", "Planificación del día", "Planificación del día", "Planificación del día", "Planificación del día", "Planificación del día"],
+            ["5:30 AM", ".NET (C# básico, consola)", "SQL (consultas, JOINs)", "Linux (archivos, permisos)", ".NET + SQL (EF Core, CRUD)", ".NET + Linux (publicar app)"],
+            ["7:00 AM", "Ejercicio físico (abdomen + mancuerna)", "Ejercicio físico (abdomen + mancuerna)", "Ejercicio físico (abdomen + mancuerna)", "Ejercicio físico (abdomen + mancuerna)", "Ejercicio físico (abdomen + mancuerna)"],
+            ["7:30 AM", "Ducha + desayuno", "Ducha + desayuno", "Ducha + desayuno", "Ducha + desayuno", "Ducha + desayuno"],
+            ["8:00 AM", ".NET (práctica: app consola)", "SQL (ejercicios prácticos)", "Linux (procesos, logs)", ".NET + SQL (API básica)", ".NET + Linux (ejecutar en terminal)"],
+            ["9:30 AM", "Descanso breve (caminata/estiramientos)", "Descanso breve (caminata/estiramientos)", "Descanso breve (caminata/estiramientos)", "Descanso breve (caminata/estiramientos)", "Descanso breve (caminata/estiramientos)"],
+            ["9:50 AM", ".NET (repaso + ejercicios)", "SQL (repaso + flashcards)", "Linux (comandos clave)", ".NET (debugging + pruebas)", "Repaso semanal integrado"],
+            ["10:50 AM", "Merienda / almuerzo ligero", "Merienda / almuerzo ligero", "Merienda / almuerzo ligero", "Merienda / almuerzo ligero", "Merienda / almuerzo ligero"],
+            ["11:20 AM", "Revisión activa (.NET)", "Revisión activa (SQL)", "Revisión activa (Linux)", "Revisión activa (.NET + SQL)", "Revisión activa (todo)"],
+            ["12:00 PM", "Tiempo personal / organización", "Tiempo personal / organización", "Tiempo personal / organización", "Tiempo personal / organización", "Tiempo personal / organización"],
+            ["1:00 PM", "Preparación para inglés", "Preparación para inglés", "Preparación para inglés", "Preparación para inglés", "Preparación para inglés"],
+            ["2:00–5:00 PM", "Inglés (clase fija)", "Inglés (clase fija)", "Inglés (clase fija)", "Inglés (clase fija)", "Inglés (clase fija)"],
+            ["5:00 PM", "Merienda + descanso", "Merienda + descanso", "Merienda + descanso", "Merienda + descanso", "Merienda + descanso"],
+            ["5:30 PM", "Proyecto .NET (integración)", "Proyecto SQL (consultas avanzadas)", "Lab Linux (SSH, logs)", "Proyecto .NET + SQL (API completa)", "Despliegue en Linux (nginx, systemd)"],
+            ["7:00 PM", "Cena", "Cena", "Cena", "Cena", "Cena"],
+            ["7:30 PM", "Lectura técnica (.NET docs)", "Lectura técnica (SQL guías)", "Lectura técnica (Linux man)", "Lectura técnica (EF Core)", "Lectura técnica (mejores prácticas)"],
+            ["8:15 PM", "Rutina de relajación", "Rutina de relajación", "Rutina de relajación", "Rutina de relajación", "Rutina de relajación"],
+            ["9:00–9:30 PM", "Dormir", "Dormir", "Dormir", "Dormir", "Dormir"]
+        ];
+
+        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const hoy = new Date();
+        const diaActual = diasSemana[hoy.getDay()];
+        
+        document.getElementById('dayInfo').textContent = `Hoy es ${diaActual}, ${hoy.toLocaleDateString('es-ES')}`;
+        
+        // Mostrar el horario automáticamente al cargar la página
+        mostrarHorario(horarioData);
+        
+        function mostrarHorario(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('tableContainer').innerHTML = 
+                    '<div class="no-data">No se encontraron datos en el horario.</div>';
+                return;
+            }
+            
+            const headers = data[0];
+            let columnaHora = -1;
+            let columnaDia = -1;
+            
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).toLowerCase().trim();
+                if (header.includes('hora')) {
+                    columnaHora = i;
+                }
+                if (header.toLowerCase() === diaActual.toLowerCase()) {
+                    columnaDia = i;
+                }
+            }
+            
+            if (columnaHora === -1 || columnaDia === -1) {
+                document.getElementById('tableContainer').innerHTML = 
+                    '<div class="no-data">No se encontró la columna "Hora" o la columna "' + diaActual + '" en el horario.</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            html += '<th>' + headers[columnaHora] + '</th>';
+            html += '<th>' + headers[columnaDia] + '</th>';
+            html += '</tr></thead><tbody>';
+            
+            let hayDatos = false;
+            for (let i = 1; i < data.length; i++) {
+                const hora = data[i][columnaHora];
+                const actividad = data[i][columnaDia];
+                
+                if (hora || actividad) {
+                    hayDatos = true;
+                    html += '<tr>';
+                    html += '<td>' + (hora || '') + '</td>';
+                    html += '<td>' + (actividad || '') + '</td>';
+                    html += '</tr>';
+                }
+            }
+            
+            html += '</tbody></table>';
+            
+            if (!hayDatos) {
+                html = '<div class="no-data">No hay actividades programadas para ' + diaActual + '.</div>';
+            }
+            
+            document.getElementById('tableContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
